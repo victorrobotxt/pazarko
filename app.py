@@ -1,12 +1,6 @@
 import os
-import spaces
 from huggingface_hub import hf_hub_download
 import server
-
-# Satisfies the ZeroGPU startup watchdog
-@spaces.GPU
-def _init_gpu():
-    pass
 
 DB_PATH = "prices.db"
 
@@ -21,4 +15,5 @@ if not os.path.exists(DB_PATH):
     print(f"Database ready at: {DB_PATH}")
 
 if __name__ == "__main__":
-    server.main(["--host", "0.0.0.0", "--port", "7860", "--db", DB_PATH])
+    port = int(os.environ.get("PORT", 8080))
+    server.main(["--host", "0.0.0.0", "--port", str(port), "--db", DB_PATH])
