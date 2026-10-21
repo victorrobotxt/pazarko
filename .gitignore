@@ -1,0 +1,9 @@
+prices.db
+prices_compact.db
+prices.backup.db
+*.db-shm
+*.db-wal
+__pycache__/
+*.pyc
+.env
+*.log

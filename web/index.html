@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Пазар — сравни цените</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-row">
+      <a class="logo" href="/" aria-label="Начало">пазар<span>.</span></a>
+      <form class="search" id="search-form" role="search">
+        <input id="q" type="search" placeholder="Търси продукт: кисело мляко верея, олио, monster… или баркод" autocomplete="off" aria-label="Търсене">
+        <button type="button" class="secondary scan" id="scan-btn" hidden aria-label="Сканирай баркод" title="Сканирай баркод в магазина">📷</button>
+        <button type="submit">Търси</button>
+      </form>
+      <button type="button" class="secondary bgn-btn" id="bgn-toggle" aria-pressed="false" title="Покажи цените и в лева (1 € = 1,95583 лв.)">лв.</button>
+      <button class="basket-btn" id="basket-open" aria-label="Количка">
+        🛒 <span id="basket-count">0</span>
+      </button>
+    </div>
+    <div class="wrap filters" id="filters">
+      <details class="dropdown" id="area-dd">
+        <summary class="area-sum">📍 <span id="area-label">Цялата страна</span></summary>
+        <div class="dd-panel">
+          <input id="area-filter-text" type="search" placeholder="Град или община…" aria-label="Търси град">
+          <div id="area-list" class="store-list" role="radiogroup" aria-label="Местоположение"></div>
+          <label class="online-toggle"><input type="checkbox" id="f-online" checked>
+            <span>Включи онлайн магазини с доставка <span class="muted small" id="online-names"></span></span></label>
+        </div>
+      </details>
+      <details class="dropdown" id="store-dd">
+        <summary>Вериги <span id="store-sel-count"></span></summary>
+        <div class="dd-panel">
+          <input id="store-filter-text" type="search" placeholder="Филтър…" aria-label="Филтър вериги">
+          <div id="store-list" class="store-list"></div>
+          <button type="button" class="link" id="store-clear">Изчисти</button>
+        </div>
+      </details>
+      <details class="dropdown" id="cards-dd">
+        <summary>💳 Моите карти <span id="cards-count"></span></summary>
+        <div class="dd-panel">
+          <p class="muted small">Цените с карта за лоялност на тези вериги ще се ползват навсякъде: търсене, сравнение и количка.</p>
+          <div id="cards-list" class="store-list"></div>
+        </div>
+      </details>
+      <label class="chip"><input type="checkbox" id="f-disc"> Само намаления</label>
+      <label class="chip"><input type="checkbox" id="f-card"> + цени с карта</label>
+      <label class="chip"><input type="checkbox" id="f-multi"> В 2+ вериги</label>
+      <select id="f-group" aria-label="Групиране">
+        <option value="family">Вкусове и разновидности заедно</option>
+        <option value="group">Само еднакви продукти</option>
+        <option value="none">Без групиране</option>
+      </select>
+      <select id="f-sort" aria-label="Подреди">
+        <option value="relevance">Най-подходящи</option>
+        <option value="price">Най-ниска цена</option>
+        <option value="unit">Цена за кг/л</option>
+        <option value="discount">Най-голямо намаление</option>
+        <option value="drop">Поевтиняли за седмица</option>
+      </select>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="hero" class="hero">
+      <h1>Сравни цените в <b id="s-stores">…</b> вериги и <b id="s-outlets">…</b> магазина</h1>
+      <p class="muted"><span id="s-products">…</span> продукта · <span id="s-compared">…</span> сравними между вериги · обновено <span id="s-updated">…</span></p>
+      <p class="loc-hint" id="loc-hint">📍 <button type="button" class="link" id="loc-hint-btn">Изберете град</button>, за да виждате само магазините около вас и техните местни цени.</p>
+      <p class="muted small">Данни: отворени данни на КЗП „Колко струва“ + публични каталози на eBag, Lidl, Kaufland, Avanti, BulMag, Metro, dm, T Market и Glovo.</p>
+    </section>
+
+    <section id="results-sec" hidden>
+      <div class="section-head">
+        <h2 id="results-title">Резултати</h2>
+        <span class="muted" id="results-count"></span>
+      </div>
+      <div class="facets" id="facets" role="toolbar" aria-label="Категории"></div>
+      <div class="grid" id="results"></div>
+      <div class="center"><button id="more" class="secondary" hidden>Зареди още</button></div>
+    </section>
+
+    <section id="expiring-sec" hidden>
+      <div class="section-head"><h2>Изтичат скоро</h2><span class="muted small">промоции, които свършват до 2 дни</span></div>
+      <div class="grid" id="expiring"></div>
+    </section>
+
+    <section id="upcoming-sec" hidden>
+      <div class="section-head"><h2>Предстоящи промоции</h2><span class="muted small">от следващите брошури</span></div>
+      <div class="grid" id="upcoming"></div>
+    </section>
+
+    <section id="drops-sec" hidden>
+      <div class="section-head"><h2>Поевтиняли за седмица</h2><span class="muted small">средна цена спрямо преди ~7 дни</span></div>
+      <div class="grid" id="drops"></div>
+    </section>
+
+    <section id="deals-sec">
+      <div class="section-head"><h2>Най-големи намаления</h2><span class="muted small" id="deals-where"></span>
+        <label class="chip small" title="Без промоции, чиято „редовна“ цена е по-висока от цената през 30-те дни преди тях (Омнибус)"><input type="checkbox" id="f-honest"> само честни</label></div>
+      <div class="grid" id="deals"></div>
+    </section>
+    <section id="shrink-sec" hidden>
+      <div class="section-head"><h2>По-малки опаковки, същата цена</h2><span class="muted small">цената на кг/л не е паднала</span></div>
+      <div class="grid" id="shrink"></div>
+    </section>
+  </main>
+
+  <dialog id="product-dlg" class="sheet" aria-labelledby="pd-title">
+    <div id="product-body"></div>
+  </dialog>
+
+  <dialog id="family-dlg" class="sheet wide" aria-labelledby="fm-title">
+    <div id="family-body"></div>
+  </dialog>
+
+  <dialog id="basket-dlg" class="sheet" aria-labelledby="bk-title">
+    <div class="sheet-head">
+      <h2 id="bk-title">Количка</h2>
+      <button class="icon" data-close aria-label="Затвори">✕</button>
+    </div>
+    <div id="basket-body"></div>
+  </dialog>
+
+  <dialog id="list-dlg" class="sheet" aria-labelledby="ls-title">
+    <div class="sheet-head"><h2 id="ls-title">Умен списък</h2><button class="icon" data-close aria-label="Затвори">✕</button></div>
+    <div class="sheet-body">
+      <p class="muted small">Поставете списъка си, по един продукт на ред. Количество: „3 x кисело мляко“ или „мляко x2“; грамаж: „кашкавал 400г“.</p>
+      <textarea id="list-text" rows="7" placeholder="прясно мляко 2л&#10;яйца 10бр&#10;кашкавал 400г" aria-label="Списък за пазаруване"></textarea>
+      <p><button type="button" id="list-run">Разпознай продуктите</button></p>
+      <div id="list-results"></div>
+    </div>
+  </dialog>
+
+  <dialog id="scan-dlg" class="sheet" aria-labelledby="sc-title">
+    <div class="sheet-head"><h2 id="sc-title">Сканирай баркод</h2><button class="icon" data-close aria-label="Затвори">✕</button></div>
+    <div class="sheet-body">
+      <video id="scan-video" playsinline muted></video>
+      <p class="muted small" id="scan-msg"></p>
+    </div>
+  </dialog>
+
+  <footer class="wrap muted small foot">
+    Цените са информативни. Промоциите с карта (Lidl Plus, Kaufland Card, Billa Card) са отбелязани отделно.
+    Данните на КЗП се публикуват веднъж дневно. Онлайн магазините доставят само до определени адреси — проверете при поръчка.
+  </footer>
+  <script src="/app.js"></script>
+</body>
+</html>
